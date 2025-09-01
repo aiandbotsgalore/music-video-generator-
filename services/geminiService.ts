@@ -1,5 +1,6 @@
 
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { EditDecision, AudioAnalysis, ClipMetadata } from "../types";
 
@@ -92,7 +93,7 @@ const responseSchema = {
             },
             description: {
                 type: Type.STRING,
-                description: 'A brief, exciting description of why this clip was chosen for this moment, referencing the audio and visual content.'
+                description: 'A very concise (5-10 words) justification for this edit, linking visual to audio.'
             }
         },
         required: ["clipIndex", "duration", "description"]
@@ -137,7 +138,7 @@ CONTENT-AWARE EDITING RULES:
 7.  Total Duration: The sum of all clip durations MUST be very close to the target duration of ${audioAnalysis.duration.toFixed(1)} seconds.
 
 INSTRUCTIONS:
-Generate a JSON array of edit decisions based on the analysis and rules above. The 'clipIndex' must be a valid 0-based index from the Visual Clip Library (an integer from 0 to ${clips.length - 1}). The 'description' should explain your creative choice, linking the visual to the music's properties.
+Generate a JSON array of edit decisions based on the analysis and rules above. The 'clipIndex' must be a valid 0-based index from the Visual Clip Library (an integer from 0 to ${clips.length - 1}). The 'description' must be very concise (5-10 words) and explain your creative choice.
 `;
 };
 
@@ -170,7 +171,7 @@ export const createVideoSequence = async (
         config: {
             responseMimeType: "application/json",
             responseSchema: responseSchema,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 32768,
             thinkingConfig: { thinkingBudget: 1024 },
         }
     });

@@ -13,7 +13,7 @@ async function decodeAudioData(file: File): Promise<AudioBuffer> {
 function analyzeEnergy(buffer: AudioBuffer): EnergySegment[] {
     const data = buffer.getChannelData(0);
     const sampleRate = buffer.sampleRate;
-    const segmentDuration = 1; // 1 second segments
+    const segmentDuration = 1; // Analyze in 1-second chunks
     const samplesPerSegment = sampleRate * segmentDuration;
     const segments: EnergySegment[] = [];
     const energyLevels: number[] = [];
@@ -37,18 +37,42 @@ function analyzeEnergy(buffer: AudioBuffer): EnergySegment[] {
     const lowThreshold = sortedEnergy[Math.floor(sortedEnergy.length * 0.33)];
     const highThreshold = sortedEnergy[Math.floor(sortedEnergy.length * 0.66)];
 
-    segments.forEach((segment, index) => {
+    const classifiedSegments: EnergySegment[] = segments.map((segment, index) => {
         const energy = energyLevels[index];
+        let intensity: 'low' | 'medium' | 'high';
         if (energy >= highThreshold) {
-            segment.intensity = 'high';
+            intensity = 'high';
         } else if (energy >= lowThreshold) {
-            segment.intensity = 'medium';
+            intensity = 'medium';
         } else {
-            segment.intensity = 'low';
+            intensity = 'low';
         }
+        return { ...segment, intensity };
     });
 
-    return segments;
+    if (classifiedSegments.length === 0) {
+        return [];
+    }
+
+    // Merge consecutive segments of the same intensity
+    const mergedSegments: EnergySegment[] = [];
+    let currentSegment = { ...classifiedSegments[0] };
+
+    for (let i = 1; i < classifiedSegments.length; i++) {
+        const nextSegment = classifiedSegments[i];
+        if (nextSegment.intensity === currentSegment.intensity) {
+            // Extend the current segment's end time
+            currentSegment.endTime = nextSegment.endTime;
+        } else {
+            // Push the completed segment and start a new one
+            mergedSegments.push(currentSegment);
+            currentSegment = { ...nextSegment };
+        }
+    }
+    // Don't forget to push the last segment
+    mergedSegments.push(currentSegment);
+
+    return mergedSegments;
 }
 
 

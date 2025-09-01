@@ -1,5 +1,3 @@
-
-
 import type { VideoAnalysis } from '../types';
 
 // The entire worker code is defined here as a string.
